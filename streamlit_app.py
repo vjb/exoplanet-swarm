@@ -31,6 +31,8 @@ warnings.filterwarnings("ignore")
 sys.path.insert(0, ".")
 
 import streamlit as st
+import numpy as np
+import plotly.graph_objects as go
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -206,6 +208,65 @@ st.divider()
 #  HELPERS
 # ══════════════════════════════════════════════════════════════════
 
+def _create_3d_orbit_model(star_id: str, period_days: float) -> go.Figure:
+    """Interactive 3D star-planet system model."""
+    u = np.linspace(0, 2 * np.pi, 50)
+    v = np.linspace(0, np.pi, 50)
+
+    # Host star sphere
+    x_star = 2 * np.outer(np.cos(u), np.sin(v))
+    y_star = 2 * np.outer(np.sin(u), np.sin(v))
+    z_star = 2 * np.outer(np.ones(np.size(u)), np.cos(v))
+
+    # Orbital path
+    theta   = np.linspace(0, 2 * np.pi, 200)
+    x_orbit = 8 * np.cos(theta)
+    y_orbit = 8 * np.sin(theta)
+    z_orbit = np.zeros_like(theta)
+
+    # Planet sphere at orbital position
+    x_planet = 0.5 * np.outer(np.cos(u), np.sin(v)) + 8
+    y_planet = 0.5 * np.outer(np.sin(u), np.sin(v))
+    z_planet = 0.5 * np.outer(np.ones(np.size(u)), np.cos(v))
+
+    fig = go.Figure()
+    fig.add_trace(go.Surface(
+        x=x_star, y=y_star, z=z_star,
+        colorscale="YlOrRd", showscale=False, name="Host Star",
+        hovertemplate="Host Star<extra></extra>",
+    ))
+    fig.add_trace(go.Scatter3d(
+        x=x_orbit, y=y_orbit, z=z_orbit,
+        mode="lines",
+        line=dict(color="#58a6ff", width=2, dash="dot"),
+        name="Orbital Path",
+        hoverinfo="skip",
+    ))
+    fig.add_trace(go.Surface(
+        x=x_planet, y=y_planet, z=z_planet,
+        colorscale="Blues", showscale=False, name=f"{star_id} b",
+        hovertemplate=f"{star_id} b<extra></extra>",
+    ))
+    fig.update_layout(
+        title=dict(
+            text=f"🪐 3D System Model: {star_id} b  ·  {period_days:.2f}-day orbit",
+            font=dict(color="#ffffff", size=14),
+        ),
+        scene=dict(
+            xaxis=dict(showbackground=False, showticklabels=False, title=""),
+            yaxis=dict(showbackground=False, showticklabels=False, title=""),
+            zaxis=dict(showbackground=False, showticklabels=False, title=""),
+            bgcolor="#0d1117",
+        ),
+        paper_bgcolor="#0d1117",
+        font=dict(color="#e6edf3"),
+        margin=dict(l=0, r=0, b=0, t=50),
+        height=420,
+        legend=dict(font=dict(color="#e6edf3"), bgcolor="rgba(0,0,0,0)"),
+    )
+    return fig
+
+
 def _get_tools():
     from tools import fetch_lightcurve_tool, clean_signal_tool, bls_periodogram_tool
     ft = fetch_lightcurve_tool.func if hasattr(fetch_lightcurve_tool, "func") else fetch_lightcurve_tool
@@ -269,6 +330,14 @@ def _display_results(raw_data, clean_data, bls_data, summary, star_id):
             st.plotly_chart(make_phase_fold_figure(clean_data, bls_data),
                             use_container_width=True, key=f"fold_{star_id}")
 
+    # 3D orbit model — full width
+    st.divider()
+    st.markdown("## 🪐 3D Orbital System Model")
+    st.caption("Conceptual visualization of the detected planet's orbit around its host star.")
+    with st.spinner("Rendering 3D orbit model..."):
+        fig_3d = _create_3d_orbit_model(star_id, bls_data["orbital_period_days"])
+        st.plotly_chart(fig_3d, use_container_width=True, key=f"orbit3d_{star_id}")
+
     st.caption(f"Data: {raw_data['mission']}  |  Cadences: {raw_data['records']:,}  |  "
                f"Powered by CrewAI · lightkurve · astropy · GPT-4o")
 
@@ -325,6 +394,15 @@ if run_button:
                 with col_r:
                     st.plotly_chart(star_result["fig_clean"], use_container_width=True, key="zv_clean")
                     st.plotly_chart(star_result["fig_fold"],  use_container_width=True, key="zv_fold")
+
+                # 3D orbit model
+                st.divider()
+                st.markdown("## 🪐 3D Orbital System Model")
+                period = star_result["bls"]["orbital_period_days"]
+                st.plotly_chart(
+                    _create_3d_orbit_model(star_id, period),
+                    use_container_width=True, key="zv_orbit3d",
+                )
 
             except Exception as e:
                 st.error(f"Zerve variable import failed: {e}")

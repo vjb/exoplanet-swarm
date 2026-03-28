@@ -2,5 +2,20 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Environment secrets — never commit
 .env
+
+# Test fixture cache (regenerated on first run)
 tests/fixtures/
+
+# Auto-generated plot files (produced by tools at runtime)
+signal_plot.png
+bls_plot.png
+
+# Streamlit local state
+.streamlit/
+
+# OS noise
+.DS_Store
+Thumbs.db

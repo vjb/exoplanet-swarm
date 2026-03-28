@@ -51,12 +51,12 @@ PALETTE = {
 _LAYOUT_BASE = dict(
     paper_bgcolor=PALETTE["bg"],
     plot_bgcolor= PALETTE["panel"],
-    font=dict(color=PALETTE["text"], family="Inter, DejaVu Sans, sans-serif"),
+    font=dict(color="#ffffff", family="Inter, DejaVu Sans, sans-serif", size=12),
     margin=dict(l=60, r=20, t=50, b=50),
     xaxis=dict(gridcolor=PALETTE["border"], showgrid=True, zeroline=False,
-               tickfont=dict(color=PALETTE["subtext"])),
+               color="#ffffff", tickfont=dict(color="#c9d1d9"), title_font=dict(color="#ffffff")),
     yaxis=dict(gridcolor=PALETTE["border"], showgrid=True, zeroline=False,
-               tickfont=dict(color=PALETTE["subtext"])),
+               color="#ffffff", tickfont=dict(color="#c9d1d9"), title_font=dict(color="#ffffff")),
 )
 
 

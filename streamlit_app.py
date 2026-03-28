@@ -64,25 +64,69 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+  /* Global */
   .stApp { background-color: #0d1117; color: #e6edf3; }
   section[data-testid="stSidebar"] { background-color: #161b22; border-right: 1px solid #30363d; }
-  h1, h2, h3 { color: #e6edf3 !important; }
+
+  /* Force ALL text to be readable */
+  .stApp p, .stApp span, .stApp label, .stApp div,
+  .stApp li, .stApp small, .stApp caption { color: #e6edf3 !important; }
+
+  /* Headers */
+  h1, h2, h3, h4 { color: #ffffff !important; }
+
+  /* Sidebar text */
+  section[data-testid="stSidebar"] p,
+  section[data-testid="stSidebar"] span,
+  section[data-testid="stSidebar"] label,
+  section[data-testid="stSidebar"] div,
+  section[data-testid="stSidebar"] li { color: #c9d1d9 !important; }
+
+  /* Metric cards — label AND value both bright */
   div[data-testid="metric-container"] {
-    background: #161b22; border: 1px solid #30363d;
-    border-radius: 8px; padding: 12px 16px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 12px 16px;
   }
-  div[data-testid="metric-container"] label { color: #8b949e !important; }
-  div[data-testid="metric-container"] div   { color: #e6edf3 !important; }
-  div[data-testid="stStatus"] { background: #161b22; border-color: #30363d; }
+  div[data-testid="metric-container"] label,
+  div[data-testid="metric-container"] [data-testid="stMetricLabel"] p { color: #c9d1d9 !important; font-size: 0.8rem !important; }
+  div[data-testid="metric-container"] [data-testid="stMetricValue"],
+  div[data-testid="metric-container"] [data-testid="stMetricValue"] div { color: #ffffff !important; font-size: 1.4rem !important; font-weight: 700 !important; }
+
+  /* Status box */
+  div[data-testid="stStatus"] { background: #161b22; border-color: #30363d; color: #e6edf3 !important; }
+  div[data-testid="stStatus"] p { color: #e6edf3 !important; }
+
+  /* Science summary card */
   .summary-card {
     background: linear-gradient(135deg, #161b22 0%, #1c2128 100%);
-    border: 1px solid #388bfd; border-radius: 12px;
-    padding: 24px 28px; margin: 16px 0;
+    border: 1px solid #388bfd;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 16px 0;
+    color: #e6edf3 !important;
+    font-size: 1rem;
+    line-height: 1.7;
     box-shadow: 0 0 20px rgba(56,139,253,0.15);
   }
-  .badge-detected   { background:#196c2e; color:#3fb950; padding:4px 10px; border-radius:20px; font-size:0.85em; font-weight:600; }
-  .badge-undetected { background:#3d1f1f; color:#f78166; padding:4px 10px; border-radius:20px; font-size:0.85em; font-weight:600; }
-  button[kind="primary"] { background: linear-gradient(90deg,#1f6feb,#388bfd); border:none; font-weight:600; }
+
+  /* Detection badges */
+  .badge-detected   { background:#196c2e; color:#ffffff; padding:4px 12px; border-radius:20px; font-size:0.9em; font-weight:700; }
+  .badge-undetected { background:#3d1f1f; color:#f78166; padding:4px 12px; border-radius:20px; font-size:0.9em; font-weight:700; }
+
+  /* st.caption — normally very faint */
+  .stCaption, [data-testid="stCaptionContainer"] p { color: #8b949e !important; font-size: 0.85rem !important; }
+
+  /* Info / success boxes */
+  div[data-testid="stAlert"] p { color: #e6edf3 !important; }
+
+  /* Run button */
+  button[kind="primary"] { background: linear-gradient(90deg,#1f6feb,#388bfd); border:none; font-weight:700; color:#fff !important; }
+
+  /* Dropdown */
+  div[data-baseweb="select"] { background: #21262d !important; }
+  div[data-baseweb="select"] span { color: #e6edf3 !important; }
 </style>
 """, unsafe_allow_html=True)
 

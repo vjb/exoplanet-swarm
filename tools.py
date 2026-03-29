@@ -12,6 +12,7 @@ No agent or LLM references in this file — pure astronomy + data science.
 
 import json
 import os
+import tempfile
 import warnings
 import numpy as np
 
@@ -101,7 +102,7 @@ def fetch_lightcurve_tool(star_id: str) -> str:
     LIVE PATH (all other stars): Downloads a single quarter of
     Kepler or TESS data (prevents memory overflow on large targets).
 
-    Returns JSON: { star_id, mission, records, time[], flux[] }
+    Returns JSON: { star_id, mission, records, data_path, status }
     Returns JSON with 'error' key on failure.
     """
     try:
@@ -113,12 +114,17 @@ def fetch_lightcurve_tool(star_id: str) -> str:
             time_vals = df["time"].tolist()
             flux_vals = df["flux"].tolist()
             print(f"[Space Scraper] Loaded {len(time_vals):,} cadences from CSV cache.")
+            
+            data_file = os.path.join(tempfile.gettempdir(), f"{star_id}_raw.json")
+            with open(data_file, "w") as f:
+                json.dump({"time": time_vals, "flux": flux_vals}, f)
+                
             return json.dumps({
                 "star_id": star_id,
                 "mission": "Kepler",
                 "records": len(time_vals),
-                "time":    time_vals,
-                "flux":    flux_vals,
+                "data_path": data_file,
+                "status": "Success"
             })
 
         # ── Live MAST path ────────────────────────────────────────
@@ -162,12 +168,16 @@ def fetch_lightcurve_tool(star_id: str) -> str:
 
         print(f"[Space Scraper] Retrieved {len(time_values):,} cadences from {mission}.")
 
+        data_file = os.path.join(tempfile.gettempdir(), f"{star_id}_raw.json")
+        with open(data_file, "w") as f:
+            json.dump({"time": time_values, "flux": flux_values}, f)
+
         return json.dumps({
             "star_id": star_id,
             "mission": mission,
             "records": len(time_values),
-            "time":    time_values,
-            "flux":    flux_values,
+            "data_path": data_file,
+            "status": "Success"
         })
 
     except Exception as exc:
@@ -198,7 +208,7 @@ def clean_signal_tool(lightcurve_json: str) -> str:
         - Detrended result (green)
 
     Returns JSON: { star_id, mission, records, removed_outliers,
-                    filter_window_size, time[], flux[] }
+                    filter_window_size, data_path, status }
     """
     try:
         data = json.loads(lightcurve_json)
@@ -208,8 +218,11 @@ def clean_signal_tool(lightcurve_json: str) -> str:
 
         print("[Signal Processor] Beginning photometric detrending...")
 
-        time_arr = np.array(data["time"], dtype=np.float64)
-        flux_arr = np.array(data["flux"], dtype=np.float64)
+        with open(data["data_path"], "r") as f:
+            raw_data = json.load(f)
+
+        time_arr = np.array(raw_data["time"], dtype=np.float64)
+        flux_arr = np.array(raw_data["flux"], dtype=np.float64)
         n = len(flux_arr)
 
         # Stage 1: SG trend removal
@@ -235,14 +248,18 @@ def clean_signal_tool(lightcurve_json: str) -> str:
         _save_signal_plot(time_arr, flux_arr, trend, time_clean, flux_clean,
                           star_id=data.get("star_id", "unknown"))
 
+        clean_file = os.path.join(tempfile.gettempdir(), f"{data.get('star_id', 'unknown')}_clean.json")
+        with open(clean_file, "w") as f:
+            json.dump({"time": time_clean.tolist(), "flux": flux_clean.tolist()}, f)
+
         return json.dumps({
             "star_id":            data.get("star_id", "unknown"),
             "mission":            data.get("mission", "unknown"),
             "records":            len(time_clean),
             "removed_outliers":   removed,
             "filter_window_size": window_len,
-            "time":               time_clean.tolist(),
-            "flux":               flux_clean.tolist(),
+            "data_path":          clean_file,
+            "status":             "Success",
         })
 
     except Exception as exc:
@@ -330,8 +347,11 @@ def bls_periodogram_tool(clean_data_json: str) -> str:
 
         print("[Astrophysicist] Initializing Box-fitting Least Squares periodogram...")
 
-        time_arr = np.array(data["time"], dtype=np.float64)
-        flux_arr = np.array(data["flux"], dtype=np.float64)
+        with open(data["data_path"], "r") as f:
+            raw_data = json.load(f)
+
+        time_arr = np.array(raw_data["time"], dtype=np.float64)
+        flux_arr = np.array(raw_data["flux"], dtype=np.float64)
 
         baseline_days = float(time_arr.max() - time_arr.min())
         max_period    = baseline_days / 3.0
@@ -355,7 +375,7 @@ def bls_periodogram_tool(clean_data_json: str) -> str:
         print(f"[Astrophysicist] Testing {n_periods} trial periods: "
               f"{min_period:.2f}–{max_period:.2f} days...")
 
-        periodogram = bls_model.power(periods, duration=[0.05, 0.1, 0.15, 0.2] * u.day)
+        periodogram = bls_model.power(periods, duration=[0.05, 0.1, 0.2, 0.3, 0.4] * u.day)
 
         best_idx    = np.argmax(periodogram.power)
         best_period = float(periodogram.period[best_idx].to(u.day).value)
@@ -369,8 +389,10 @@ def bls_periodogram_tool(clean_data_json: str) -> str:
         transit_depth_ppm  = float(stats["depth"][0]) * 1_000_000
         duration_days      = float(periodogram.duration[best_idx].to(u.day).value)
 
-        median_power = float(np.median(periodogram.power))
-        snr          = best_power / median_power if median_power > 0 else 0.0
+        mean_power = float(np.mean(periodogram.power))
+        std_power  = float(np.std(periodogram.power))
+        snr        = (best_power - mean_power) / std_power if std_power > 0 else 0.0
+
         planet_prob  = float(1.0 - np.exp(-snr / 10.0))
 
         if snr >= 15:   quality = "Strong"

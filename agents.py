@@ -30,7 +30,7 @@ def _get_llm():
     global _llm_instance
     if _llm_instance is None:
         _llm_instance = ChatOpenAI(
-            model="gpt-4o",    # Best reasoning for scientific interpretation
+            model=os.environ.get("OPENAI_MODEL_NAME", "gpt-4o"),
             temperature=0.2,   # Low temp = deterministic analysis
             api_key=os.environ.get("OPENAI_API_KEY"),
         )
@@ -170,7 +170,8 @@ def make_crew(star_id: str) -> Crew:
             f"for the star '{star_id}' from the NASA MAST archive. "
             "Verify the download succeeded (no error key in the output). "
             "Report: mission name, number of cadences retrieved, and the time baseline in days. "
-            "Pass the full JSON result forward for signal processing."
+            "Pass the full JSON result forward for signal processing. "
+            "If the tool returns an 'error' key, you must halt analysis and report the exact error message as your final output."
         ),
         expected_output=(
             "A valid JSON string containing keys: star_id, mission, records, time, flux. "
@@ -186,7 +187,8 @@ def make_crew(star_id: str) -> Crew:
             "Report how many outlier cadences were removed and confirm the Savitzky-Golay "
             "window size used. Emphasize: do NOT use a window so wide that it could flatten "
             "transit dips shorter than 0.1% of the total baseline. "
-            "Pass the cleaned JSON forward for BLS analysis."
+            "Pass the cleaned JSON forward for BLS analysis. "
+            "If the tool returns an 'error' key, you must halt analysis and report the exact error message as your final output."
         ),
         expected_output=(
             "A valid JSON string with keys: star_id, mission, records, removed_outliers, "

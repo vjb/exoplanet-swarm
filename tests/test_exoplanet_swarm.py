@@ -13,7 +13,9 @@ Integration:    pytest tests/ -v -m integration
 """
 
 import json
+import os
 import sys
+import tempfile
 import unittest
 import numpy as np
 import pytest
@@ -46,8 +48,11 @@ def _synthetic_lc(n=3000, period=3.9, depth=0.01, noise=0.001, baseline=90.0):
 
 def _clean_json(star_id="TestStar", n=500, baseline=30.0):
     t, f = _synthetic_lc(n=n, baseline=baseline)
+    tmp_path = os.path.join(tempfile.gettempdir(), f"{star_id}_test_clean.json")
+    with open(tmp_path, "w") as fp:
+        json.dump({"time": t.tolist(), "flux": f.tolist()}, fp)
     return json.dumps({"star_id": star_id, "mission": "Kepler",
-                       "records": n, "time": t.tolist(), "flux": f.tolist()})
+                       "records": n, "data_path": tmp_path, "status": "Success"})
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -82,7 +87,11 @@ class TestFetchToolUnit:
         mock_fn.return_value = self._mock_search()
         data = json.loads(fetch_tool("Kepler-186"))
         assert "error" not in data
-        assert "time" in data and "flux" in data
+        assert "data_path" in data
+        assert os.path.exists(data["data_path"])
+        with open(data["data_path"], "r") as f:
+            raw_data = json.load(f)
+        assert "time" in raw_data and "flux" in raw_data
         assert data["records"] > 0
 
     @patch("tools.lk.search_lightcurve")
@@ -109,14 +118,21 @@ class TestCleanToolUnit:
     def test_flux_centered_near_one(self):
         data = json.loads(clean_tool(_clean_json(n=500)))
         assert "error" not in data
-        flux = np.array(data["flux"])
+        with open(data["data_path"], "r") as f:
+            clean_data = json.load(f)
+        flux = np.array(clean_data["flux"])
         assert abs(np.median(flux) - 1.0) < 0.05
 
     def test_removes_injected_spikes(self):
-        raw = json.loads(_clean_json(n=500))
-        raw["flux"][10]  =  10.0
-        raw["flux"][250] = -10.0
-        data = json.loads(clean_tool(json.dumps(raw)))
+        raw_json_str = _clean_json(n=500)
+        raw_info = json.loads(raw_json_str)
+        with open(raw_info["data_path"], "r") as f:
+            raw_data = json.load(f)
+        raw_data["flux"][10]  =  10.0
+        raw_data["flux"][250] = -10.0
+        with open(raw_info["data_path"], "w") as f:
+            json.dump(raw_data, f)
+        data = json.loads(clean_tool(raw_json_str))
         assert "error" not in data
         assert data["removed_outliers"] >= 2
 
@@ -129,10 +145,12 @@ class TestCleanToolUnit:
         assert data["filter_window_size"] % 2 == 1
 
     def test_short_series_does_not_crash(self):
+        tmp_path = os.path.join(tempfile.gettempdir(), "x_test_short.json")
+        with open(tmp_path, "w") as f:
+            json.dump({"time": np.linspace(0, 5, 50).tolist(), "flux": np.ones(50).tolist()}, f)
         raw = json.dumps({"star_id": "x", "mission": "Kepler",
                           "records": 50,
-                          "time": np.linspace(0, 5, 50).tolist(),
-                          "flux": np.ones(50).tolist()})
+                          "data_path": tmp_path})
         data = json.loads(clean_tool(raw))
         assert "error" not in data
 
@@ -143,8 +161,11 @@ class TestBLSToolUnit:
     def _bls_input(self, period=3.9, depth=0.02, n=3000, baseline=90.0):
         t, f = _synthetic_lc(n=n, period=period, depth=depth,
                               noise=0.0005, baseline=baseline)
+        tmp_path = os.path.join(tempfile.gettempdir(), "Syn_test_bls.json")
+        with open(tmp_path, "w") as fp:
+            json.dump({"time": t.tolist(), "flux": f.tolist()}, fp)
         return json.dumps({"star_id": "Syn", "mission": "Kepler",
-                           "records": n, "time": t.tolist(), "flux": f.tolist()})
+                           "records": n, "data_path": tmp_path})
 
     def test_recovers_injected_period_within_5pct(self):
         true_period = 4.0
@@ -181,9 +202,11 @@ class TestBLSToolUnit:
         assert bls_tool(err) == err
 
     def test_too_short_baseline_returns_error(self):
+        tmp_path = os.path.join(tempfile.gettempdir(), "x_test_short2.json")
+        with open(tmp_path, "w") as f:
+            json.dump({"time": np.linspace(0, 1.0, 100).tolist(), "flux": np.ones(100).tolist()}, f)
         short = json.dumps({"star_id": "x", "mission": "Kepler", "records": 100,
-                            "time": np.linspace(0, 1.0, 100).tolist(),
-                            "flux": np.ones(100).tolist()})
+                            "data_path": tmp_path})
         data = json.loads(bls_tool(short))
         assert "error" in data
 

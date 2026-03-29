@@ -59,7 +59,7 @@ except ImportError:
 
 st.set_page_config(
     page_title="Exoplanet Swarm",
-    page_icon="🚀",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -153,7 +153,7 @@ STAR_INFO = {
 # ══════════════════════════════════════════════════════════════════
 
 with st.sidebar:
-    st.markdown("## 🚀 Exoplanet Swarm")
+    st.markdown("##  Exoplanet Swarm")
     st.markdown("*Multi-agent AI pipeline for autonomous transit detection*")
     st.divider()
 
@@ -164,29 +164,29 @@ with st.sidebar:
             icon="⚡"
         )
     else:
-        st.info("🖥️ **Local Mode** — runs pipeline on demand.", icon="🖥️")
+        st.info("️ **Local Mode** — runs pipeline on demand.", icon="️")
 
     st.divider()
 
     star_id = st.selectbox(
-        "🌟 Target Star", options=STARS, index=0,
+        " Target Star", options=STARS, index=0,
         help="Kepler-186 loads from demo CSV cache (no MAST download).",
     )
     st.caption(STAR_INFO.get(star_id, ""))
     st.divider()
 
     run_button = st.button(
-        "🔭 Run Swarm", type="primary", use_container_width=True,
+        " Run Swarm", type="primary", use_container_width=True,
         help="Zerve: reads Fleet results. Local: runs pipeline step-by-step.",
     )
 
     st.divider()
     st.markdown("**Pipeline**")
     st.markdown("""
-    1. 🛸 Space Scraper → NASA MAST
-    2. 📡 Signal Processor → SG filter
-    3. 🔭 Astrophysicist → BLS math
-    4. 📝 Science Communicator → GPT-4o
+    1.  Space Scraper → NASA MAST
+    2.  Signal Processor → SG filter
+    3.  Astrophysicist → BLS math
+    4.  Science Communicator → GPT-4o
     """)
     st.divider()
     st.caption("CrewAI · lightkurve · astropy · Zerve.ai")
@@ -196,7 +196,7 @@ with st.sidebar:
 #  HEADER
 # ══════════════════════════════════════════════════════════════════
 
-st.markdown("# 🚀 Exoplanet Swarm")
+st.markdown("#  Exoplanet Swarm")
 st.markdown(
     "Autonomous multi-agent AI pipeline: raw NASA telescope data "
     "→ BLS transit detection → public science summary."
@@ -332,7 +332,7 @@ def _create_3d_orbit_model(star_id: str, period_days: float) -> go.Figure:
 
     fig.update_layout(
         title=dict(
-            text=(f"🪐 {star_id} System  ·  {period_days:.4f}-day orbit  "
+            text=(f" {star_id} System  ·  {period_days:.4f}-day orbit  "
                   f"·  22° inclination  ·  Drag to rotate"),
             font=dict(color="#ffffff", size=13),
             x=0.01,
@@ -432,10 +432,10 @@ def _display_results(raw_data, clean_data, bls_data, summary, star_id):
                            make_bls_figure, make_phase_fold_figure)
 
     detected = bls_data.get("planet_detected", False)
-    badge = ('<span class="badge-detected">🟢 SIGNAL DETECTED</span>'
+    badge = ('<span class="badge-detected"> SIGNAL DETECTED</span>'
              if detected else
-             '<span class="badge-undetected">🔴 BELOW THRESHOLD</span>')
-    st.markdown(f"## 📡 Results for **{star_id}**  {badge}", unsafe_allow_html=True)
+             '<span class="badge-undetected"> BELOW THRESHOLD</span>')
+    st.markdown(f"##  Results for **{star_id}**  {badge}", unsafe_allow_html=True)
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Orbital Period",  f"{bls_data['orbital_period_days']:.4f} d")
@@ -449,7 +449,7 @@ def _display_results(raw_data, clean_data, bls_data, summary, star_id):
                     unsafe_allow_html=True)
 
     st.divider()
-    st.markdown("## 📊 Interactive Diagnostic Charts")
+    st.markdown("##  Interactive Diagnostic Charts")
     st.caption("Hover to inspect individual data points. Zoom, pan, download.")
 
     col_l, col_r = st.columns(2)
@@ -470,7 +470,7 @@ def _display_results(raw_data, clean_data, bls_data, summary, star_id):
 
     # 3D orbit model — full width
     st.divider()
-    st.markdown("## 🪐 3D Orbital System Model")
+    st.markdown("##  3D Orbital System Model")
     st.caption("Conceptual visualization of the detected planet's orbit around its host star.")
     with st.spinner("Rendering 3D orbit model..."):
         fig_3d = _create_3d_orbit_model(star_id, bls_data["orbital_period_days"])
@@ -505,10 +505,10 @@ if run_button:
 
                 bls = star_result["bls"]
                 detected = bls.get("planet_detected", False)
-                badge = ('<span class="badge-detected">🟢 SIGNAL DETECTED</span>'
+                badge = ('<span class="badge-detected"> SIGNAL DETECTED</span>'
                          if detected else
-                         '<span class="badge-undetected">🔴 BELOW THRESHOLD</span>')
-                st.markdown(f"## 📡 Results for **{star_id}**  {badge}",
+                         '<span class="badge-undetected"> BELOW THRESHOLD</span>')
+                st.markdown(f"##  Results for **{star_id}**  {badge}",
                             unsafe_allow_html=True)
 
                 c1, c2, c3, c4, c5 = st.columns(5)
@@ -523,7 +523,7 @@ if run_button:
                     unsafe_allow_html=True,
                 )
                 st.divider()
-                st.markdown("## 📊 Interactive Diagnostic Charts")
+                st.markdown("##  Interactive Diagnostic Charts")
 
                 col_l, col_r = st.columns(2)
                 with col_l:
@@ -535,7 +535,7 @@ if run_button:
 
                 # 3D orbit model
                 st.divider()
-                st.markdown("## 🪐 3D Orbital System Model")
+                st.markdown("##  3D Orbital System Model")
                 period = star_result["bls"]["orbital_period_days"]
                 st.plotly_chart(
                     _create_3d_orbit_model(star_id, period),
@@ -552,10 +552,10 @@ if run_button:
         fetch_tool, clean_tool, bls_tool = _get_tools()
         raw_data = clean_data = bls_data = summary = None
 
-        with st.status(f"🚀 Running Exoplanet Swarm on **{star_id}**...",
+        with st.status(f" Running Exoplanet Swarm on **{star_id}**...",
                        expanded=True) as status:
 
-            st.write("🛸 **Space Scraper** — querying NASA MAST archive...")
+            st.write(" **Space Scraper** — querying NASA MAST archive...")
             t0 = time.time()
             raw_json = fetch_tool(star_id)
             raw_data = json.loads(raw_json)
@@ -565,7 +565,7 @@ if run_button:
             st.write(f"   ✅ {raw_data['records']:,} cadences from "
                      f"{raw_data['mission']} in {time.time()-t0:.1f}s")
 
-            st.write("📡 **Signal Processor** — detrending photometry...")
+            st.write(" **Signal Processor** — detrending photometry...")
             t0 = time.time()
             clean_json = clean_tool(raw_json)
             clean_data = json.loads(clean_json)
@@ -575,7 +575,7 @@ if run_button:
             st.write(f"   ✅ Removed {clean_data['removed_outliers']:,} outliers "
                      f"in {time.time()-t0:.1f}s")
 
-            st.write("🔭 **Astrophysicist** — running BLS periodogram...")
+            st.write(" **Astrophysicist** — running BLS periodogram...")
             t0 = time.time()
             bls_json = bls_tool(clean_json)
             bls_data = json.loads(bls_json)
@@ -586,7 +586,7 @@ if run_button:
                      f"SNR: {bls_data['snr']:.2f} | "
                      f"{bls_data['detection_quality']} in {time.time()-t0:.1f}s")
 
-            st.write("📝 **Science Communicator** — writing public summary...")
+            st.write(" **Science Communicator** — writing public summary...")
             t0 = time.time()
             try:
                 summary = _get_science_summary(bls_data, star_id)
@@ -603,18 +603,18 @@ else:
     mode_msg = (
         "⚡ Zerve Fleet Mode: results pre-computed in parallel across 3 stars. Click to load instantly."
         if ZERVE_MODE else
-        "🖥️ Local Mode: click to run the full pipeline step-by-step."
+        "️ Local Mode: click to run the full pipeline step-by-step."
     )
     st.markdown(f"""
     <div style="text-align:center; padding:60px 20px; color:#8b949e;">
-        <div style="font-size:72px; margin-bottom:16px;">🌌</div>
+        <div style="font-size:72px; margin-bottom:16px;"></div>
         <h3 style="color:#8b949e;">Select a star and click
             <strong style="color:#58a6ff;">Run Swarm</strong></h3>
         <p style="margin-bottom:8px;">{mode_msg}</p>
         <br>
         <p style="font-size:0.85em;">
-            🛸 Space Scraper &nbsp;→&nbsp; 📡 Signal Processor &nbsp;→&nbsp;
-            🔭 Astrophysicist &nbsp;→&nbsp; 📝 Science Communicator
+             Space Scraper &nbsp;→&nbsp;  Signal Processor &nbsp;→&nbsp;
+             Astrophysicist &nbsp;→&nbsp;  Science Communicator
         </p>
     </div>
     """, unsafe_allow_html=True)

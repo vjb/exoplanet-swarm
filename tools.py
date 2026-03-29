@@ -295,7 +295,7 @@ def _save_signal_plot(time_raw, flux_raw, trend, time_clean, flux_clean, star_id
         fig.savefig("signal_plot.png", dpi=130, bbox_inches="tight",
                     facecolor=_DARK["bg"])
         plt.close(fig)
-        print("[Signal Processor] 📊 Saved → signal_plot.png")
+        print("[Signal Processor]  Saved → signal_plot.png")
 
     except Exception as e:
         print(f"[Signal Processor] Warning: could not save signal_plot.png: {e}")
@@ -468,7 +468,7 @@ def _save_bls_plot(period_vals, power_vals, best_period, time_arr, flux_arr, sta
         fig.savefig("bls_plot.png", dpi=130, bbox_inches="tight",
                     facecolor=_DARK["bg"])
         plt.close(fig)
-        print("[Astrophysicist] 📊 Saved → bls_plot.png")
+        print("[Astrophysicist]  Saved → bls_plot.png")
 
     except Exception as e:
         print(f"[Astrophysicist] Warning: could not save bls_plot.png: {e}")

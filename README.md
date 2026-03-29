@@ -1,97 +1,79 @@
-# 🚀 Exoplanet Swarm
+# Exoplanet Swarm
 
-> A production-ready multi-agent CrewAI pipeline that autonomously ingests raw NASA telescope data, processes the photometric signal, runs Box-fitting Least Squares (BLS) transit detection mathematics, and produces a peer-quality science summary — deployed as an interactive Streamlit app on Zerve.ai.
+> A production-ready multi-agent CrewAI pipeline that autonomously ingests raw NASA telescope data, processes the photometric signal, runs Box-fitting Least Squares (BLS) transit detection mathematics, and produces a peer-quality science summary.
 
 ---
 
-## 🌌 Live Demo
+## Live Execution
 
-**Deployed on Zerve.ai** — select a star, click Run Swarm, watch 4 AI agents hunt for planets in real NASA data.
+Select a target star, initialize the swarm, and watch 4 CrewAI agents hunt for planets in genuine NASA observational data.
 
 | Pipeline Step | Agent | Time (Kepler-186) |
 |---|---|---|
-| 🛸 NASA MAST data retrieval | Space Scraper | ~1s (demo cache) |
-| 📡 Photometric detrending | Signal Processor | ~4s |
-| 🔭 BLS transit search | Astrophysicist | ~70s |
-| 📝 Public science summary | Science Communicator | ~10s |
+| NASA MAST Data Retrieval | Space Scraper | ~1s |
+| Photometric Detrending | Signal Processor | ~4s |
+| BLS Transit Search | Astrophysicist | ~70s |
+| Public Science Summary | Science Communicator | ~10s |
 
 ---
 
 ## Architecture
 
-### Three-File Code Split
+At its core, Exoplanet Swarm merges classical astrophysics with cutting-edge Large Language Models (LLMs). The real physics operations (BLS, signal detrending) are rigorously segregated from the LLM reasoning to ensure absolute mathematical fidelity.
+
+### Code Split
 
 | File | Responsibility |
 |---|---|
-| `tools.py` | All NASA fetch, signal processing, and BLS math — zero LLM imports |
-| `agents.py` | CrewAI Agent/Task definitions, lazy LLM singleton, `make_crew()` |
-| `main.py` | CLI entry point — `python main.py "Kepler-186"` |
-
-### Zerve Platform Architecture
-
-| Layer | File | Purpose |
-|---|---|---|
-| **Canvas / Fleets** | `zerve_canvas_block.py` | Paste into Zerve Python block; `spread()` fans to 3 parallel runs |
-| **Bridge** | `streamlit_app.py` | `from zerve import variable` reads pre-computed Fleet results |
-| **Hosted App** | `streamlit_app.py` | Deployed via Zerve → Hosted Apps → Python |
+| `tools.py` | All NASA fetch, signal processing, and BLS math. Zero LLM imports. Pure physics. |
+| `agents.py` | CrewAI Agent/Task definitions, LLM logic orchestration, and pipeline initialization. |
+| `main.py` | CLI entry point — e.g., `python main.py "Kepler-186"` |
+| `streamlit_app.py` | Interactive web dashboard combining real-time logs and Plotly visualizations. |
 
 ### Agent Flow Diagram
 
 ```mermaid
 flowchart TD
-    INPUT(["`**Target Star**
-    e.g. 'Kepler-186'`"])
+    INPUT(["Target Star
+    e.g. 'Kepler-186'"])
 
-    subgraph tools ["tools.py — Custom @tool functions"]
+    subgraph physics ["tools.py — Astrophysics Data & Math"]
+        direction TB
         T1["fetch_lightcurve_tool
-        lightkurve → NASA MAST API
-        ⚡ demo cache for Kepler-186"]
+        Retrieves real NASA MAST API data"]
         T2["clean_signal_tool
-        Savitzky-Golay + 3σ clip
-        📊 saves signal_plot.png"]
+        Savitzky-Golay + 3-Sigma Clip
+        Generates signal_plot.png"]
         T3["bls_periodogram_tool
         astropy BoxLeastSquares
-        📊 saves bls_plot.png
-        🏷️ returns PlanetMetrics JSON"]
+        Generates bls_plot.png
+        Outputs PlanetMetrics JSON"]
     end
 
-    subgraph crew ["agents.py — Sequential CrewAI Crew"]
-        A1["🛸 Space Scraper
-        Downloads raw FITS data"]
-        A2["📡 Signal Processor
-        Detrends stellar noise"]
-        A3["🔭 Astrophysicist
-        Runs BLS periodogram"]
-        A4["📝 Science Communicator
-        Writes public summary
-        (strict float preservation)"]
+    subgraph agents ["agents.py — CrewAI LLM Orchestration"]
+        direction TB
+        A1["Space Scraper
+        Navigates and scrapes NASA archives"]
+        A2["Signal Processor
+        Executes noise detrending analysis"]
+        A3["Astrophysicist
+        Runs transit physics mathematics"]
+        A4["Science Communicator
+        Compiles public summary
+        Preserves strict float precision"]
     end
 
-    subgraph zerve ["Zerve Platform"]
-        ZC["zerve_canvas_block.py
-        spread(stars) → 3× parallel Fleet"]
-        ZS["streamlit_app.py
-        from zerve import variable"]
-    end
-
-    OUTPUT(["`**Science Summary +
-    4 Interactive Plotly Charts**`"])
+    OUTPUT(["Interactive Analytics Dashboard &
+    Science Diagnostics"])
 
     INPUT --> A1
-    A1 -- "uses" --> T1
-    A1 -- "JSON: time, flux, records" --> A2
-    A2 -- "uses" --> T2
-    A2 -- "JSON: cleaned flux" --> A3
-    A3 -- "uses" --> T3
-    A3 -- "PlanetMetrics JSON" --> A4
+    A1 -- "Invokes" --> T1
+    A1 -- "Raw Flux DataFrame" --> A2
+    A2 -- "Invokes" --> T2
+    A2 -- "Cleaned Flux Selection" --> A3
+    A3 -- "Invokes" --> T3
+    A3 -- "PlanetMetrics Artifact" --> A4
     A4 --> OUTPUT
-    ZC --> ZS --> OUTPUT
-
-    style tools fill:#161b22,stroke:#30363d,color:#e6edf3
-    style crew  fill:#0d1117,stroke:#30363d,color:#e6edf3
-    style zerve fill:#1c2128,stroke:#388bfd,color:#e6edf3
-    style INPUT  fill:#1f6feb,stroke:#388bfd,color:#fff
-    style OUTPUT fill:#196c2e,stroke:#2ea043,color:#fff
 ```
 
 ---
@@ -119,13 +101,13 @@ LANGCHAIN_API_KEY=lsv2_...   # optional — enables LangSmith tracing
 
 > **Swap LLMs**: Replace `ChatOpenAI` in `agents.py` with any LangChain-compatible provider.
 
-### 3. Run the Streamlit app (local)
+### 3. Run the Streamlit app
 
 ```bash
 streamlit run streamlit_app.py
 ```
 
-The app auto-detects that it's running locally (`from zerve import variable` fails gracefully) and runs the pipeline step-by-step with live progress.
+The app executes the multi-agent pipeline step-by-step with real-time progress updates.
 
 ### 4. Run the CLI pipeline
 
@@ -145,45 +127,9 @@ Outputs `kepler186_transit_analysis.html` — fully interactive Plotly 4-panel c
 
 ---
 
-## Zerve Deployment
-
-### Step 1 — Canvas Block (Heavy Compute via Fleets)
-
-1. Create a new Python block on the Zerve canvas, name it **`swarm_execution`**
-2. Paste the contents of `zerve_canvas_block.py`
-3. Use Zerve's `spread(["Kepler-186", "Kepler-442", "TOI 700"])` to fan into **3 parallel Fleet executions**
-4. Connect to a **Gather block** — output becomes `final_results_dict`
-
-### Step 2 — Hosted App (Frontend)
-
-In Zerve → Organization → **Hosted Apps**:
-
-| Setting | Value |
-|---|---|
-| App Type | Python |
-| App Script Name | `streamlit_app.py` |
-| Requirements | `requirements.txt` |
-
-Add secrets in **Assets → Constants & Secrets**:
-- `OPENAI_API_KEY` → mark as **Secret**
-- `LANGCHAIN_API_KEY` → mark as **Secret** (optional)
-
-### Step 3 — How it works on Zerve
-
-```python
-# streamlit_app.py — Zerve runtime path
-from zerve import variable
-
-# Reads results pre-computed by the Fleet (no re-running agents)
-final_results_dict = variable("swarm_execution", "final_results_dict")
-star_result = final_results_dict["Kepler-186"]
-```
-
-When `zerve` is not installed (local), the app runs the pipeline itself — same UI, same results.
-
----
-
 ## Running Tests
+
+Exoplanet Swarm comes with a rigorous test suite to ensure mathematical and operational accuracy.
 
 ```bash
 # Unit tests — fully mocked, no network, ~5s
@@ -214,100 +160,58 @@ Fetches **146,046 actual Kepler photometric cadences** from NASA MAST and assert
 
 ## Key Design Details
 
-### Demo Cache (Zero-Latency Kepler-186)
+### LLM Orchestrated, Mathematically Sound Physics
 
-`fetch_lightcurve_tool` checks for `demo_kepler186_data.csv` before hitting MAST:
+CrewAI operates the system's reasoning path, deciding what sequence of math functions to call, interpreting error logs, and writing analytical conclusions. However, **the actual math is strictly isolated**. We offload computation to classical industry-standard algorithms (like `astropy`'s BoxLeastSquares and `scipy`'s Savitzky-Golay filters) to prevent LLM hallucination of scientific data.
 
-```python
-if star_id == "Kepler-186" and os.path.exists("demo_kepler186_data.csv"):
-    # Instant load — 73,023 cadences from CSV, no network call
-```
+### Strict Pydantic Schema Exchange
 
-All other stars: downloads **1 quarter only** (`search_result[:1]`) to prevent memory overflow on Zerve containers.
-
-### PlanetMetrics — Strict Pydantic Schema
-
-`bls_periodogram_tool` always returns data conforming to:
+The pipeline enforces data structure natively, guaranteeing precise floating-point metrics transition downstream.
 
 ```python
 class PlanetMetrics(BaseModel):
     star_id:               str
     mission:               str
-    orbital_period_days:   float   # never rounded downstream
+    orbital_period_days:   float   # precise orbit length
     transit_depth_ppm:     float
     transit_duration_days: float
     planet_probability:    float
     snr:                   float
     detection_quality:     str     # 'Strong' | 'Moderate' | 'Weak' | 'Noise'
-    planet_detected:       bool    # True if SNR ≥ 7
+    planet_detected:       bool    # Evaluated by SNR threshold
 ```
 
-The Science Communicator is strictly prompted to quote floats **verbatim** — no rounding.
+### Traceable Visual Records
 
-### Visual Paper Trail (Auto-Generated Plots)
-
-Each tool call saves a diagnostic plot to the working directory:
+Each tool call saves diagnostic plots to disk:
 
 | File | Generated by | Contents |
 |---|---|---|
-| `signal_plot.png` | `clean_signal_tool` | Raw flux + SG trend + cleaned flux |
-| `bls_plot.png` | `bls_periodogram_tool` | BLS spectrum + phase-folded curve |
+| `signal_plot.png` | `clean_signal_tool` | Raw flux, detrending models, cleaned results |
+| `bls_plot.png` | `bls_periodogram_tool` | BLS spectrum and phase-folded orbital curve |
 
-These render automatically on the Zerve canvas after each agent run.
-
-### LangSmith Tracing
-
-Set `LANGCHAIN_API_KEY` and every agent step, tool call, and LLM invocation appears at **smith.langchain.com** under project `exoplanet-swarm`.
+This ensures full transparency for every conclusion the AI swarm derives.
 
 ---
 
-## Project Structure
+## Supported Target Stars
 
-```
-zerve-ai/
-├── tools.py                  # @tool functions — fetch, clean, BLS + PlanetMetrics
-├── agents.py                 # CrewAI agents, tasks, make_crew()
-├── main.py                   # CLI: python main.py "Kepler-186"
-├── streamlit_app.py          # Zerve Hosted App — dual-mode (Fleet or local)
-├── zerve_canvas_block.py     # Paste into Zerve canvas block 'swarm_execution'
-├── visualize.py              # Plotly 4-panel interactive visualization
-├── demo_kepler186_data.csv   # 73k-cadence demo cache (no MAST download needed)
-├── requirements.txt
-├── pytest.ini                # custom markers: unit, integration
-├── .env.example
-├── .gitignore
-├── README.md
-└── tests/
-    ├── conftest.py                 # session-scoped MAST fixture cache
-    └── test_exoplanet_swarm.py     # 16 unit + 11 integration tests (27 total)
-```
-
----
-
-## Target Stars
-
-| Star | Why it's interesting |
+| Star | Scientific Interest |
 |---|---|
-| `Kepler-186` | 5 planets; Earth-size in habitable zone (186f) · **demo default** |
-| `Kepler-442` | Super-Earth in habitable zone, high habitability score |
-| `TOI 700` | TESS habitable zone Earth-size planet |
-| `Kepler-62` | Two habitable zone planets (62e, 62f) |
-| `Kepler-452` | Earth's "cousin" — 385-day year |
+| `Kepler-186` | 5 planets; Earth-size in habitable zone (186f). |
+| `Kepler-442` | Super-Earth in habitable zone with high habitability index. |
+| `TOI 700` | TESS habitable zone Earth-size findings. |
+| `Kepler-62` | Features two habitable zone planets (62e, 62f). |
+| `Kepler-452` | Earth's cousin featuring a 385-day orbital resonance. |
 
 ---
 
-## Dependencies
+## Core Dependencies
 
 | Package | Purpose |
 |---|---|
-| `crewai` | Multi-agent orchestration |
-| `langchain-openai` | LLM interface |
-| `lightkurve` | NASA MAST data retrieval |
-| `astropy` | BLS periodogram, units |
-| `scipy` | Savitzky-Golay filter |
-| `numpy` | Numerical operations |
-| `pandas` | DataFrame handling |
-| `plotly` | Interactive visualization |
-| `streamlit` | Web app frontend |
-| `pydantic` | Strict output schema (PlanetMetrics) |
-| `python-dotenv` | `.env` loading |
+| `crewai` | Central LLM pipeline and multi-agent governance |
+| `lightkurve` | Interface connecting Agents to real NASA MAST telescope data |
+| `astropy` | BLS periodogram and transit detection mathematics |
+| `scipy` | Detrending noise anomalies |
+| `plotly`, `streamlit` | User interface and data visualizations |

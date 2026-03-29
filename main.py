@@ -27,7 +27,7 @@ load_dotenv()
 if os.environ.get("LANGCHAIN_API_KEY"):
     os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
     os.environ.setdefault("LANGCHAIN_PROJECT",    "exoplanet-swarm")
-    print("🔍 LangSmith tracing enabled → https://smith.langchain.com")
+    print(" LangSmith tracing enabled → https://smith.langchain.com")
 
 from agents import make_crew
 
@@ -44,9 +44,9 @@ def run(star_id: str) -> str:
         The Science Communicator's final two-paragraph summary string.
     """
     print("\n" + "═" * 65)
-    print(f"  🚀  EXOPLANET SWARM INITIALIZING")
-    print(f"  🌟  Target Star : {star_id}")
-    print(f"  🤖  Agents      : Space Scraper → Signal Processor")
+    print(f"    EXOPLANET SWARM INITIALIZING")
+    print(f"    Target Star : {star_id}")
+    print(f"    Agents      : Space Scraper → Signal Processor")
     print(f"                    → Astrophysicist → Science Communicator")
     print("═" * 65 + "\n")
 
@@ -56,7 +56,7 @@ def run(star_id: str) -> str:
     print("\n" + "═" * 65)
     print("  ✅  EXOPLANET SWARM COMPLETE")
     print("═" * 65)
-    print("\n📡 FINAL SCIENCE SUMMARY:\n")
+    print("\n FINAL SCIENCE SUMMARY:\n")
     print(result)
     print()
 
